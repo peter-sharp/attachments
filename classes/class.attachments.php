@@ -68,7 +68,9 @@ if ( ! class_exists( 'Attachments' ) ) :
             include_once( ATTACHMENTS_DIR . '/classes/class.field.php' );
 
             // include our fields
-            $this->fields = $this->get_field_types();
+            add_action('init', function(){
+                $this->fields = $this->get_field_types();
+            });
 
             // set our image sizes
             $this->image_sizes = array_merge( $this->image_sizes, get_intermediate_image_sizes() );
