@@ -997,34 +997,42 @@ if ( ! class_exists( 'Attachments' ) ) :
             );
 
             // support custom field types
-            // $field_types = apply_filters( 'attachments_fields', $field_types );
+            $field_types = apply_filters( 'attachments_fields', $field_types );
+            
 
-            $field_index = 0;
+           
             foreach ( $field_types as $type => $path ) {
-                // proceed with inclusion
-                if ( file_exists( $path ) ) {
-                    // include the file
-                    include_once( $path );
+                
+                if ( !file_exists( $path ) ) {
+			// skip file
+			continue;
+		}
+		// proceed with inclusion
+	   
+	    include_once( $path );
 
-                    // store the registered classes so we can single out what gets added
-                    $existing_classes = get_declared_classes();
+	    // store the registered classes so we can single out what gets added
+	    $existing_classes = get_declared_classes();
 
-                    // we're going to use our Attachments class as a reference because
-                    // during subsequent instantiations of Attachments (e.g. within template files)
-                    // these field classes WILL NOT be added to the array again because
-                    // we're using include_once() so that strategy is no longer useful
+	    // we're going to use our Attachments class as a reference because
+	    // during subsequent instantiations of Attachments (e.g. within template files)
+	    // these field classes WILL NOT be added to the array again because
+	    // we're using include_once() so that strategy is no longer useful
 
-                    // determine it's class
-                    $flag = array_search( 'Attachments_Field', $existing_classes );
+	    $classnameGuess = preg_quote('Attachments_Field_' . ucFirst($type), '~');
+	    // search for a class 
+	    $matches = preg_grep('~'. $classnameGuess. '~', $existing_classes);
 
-                    // the field's class is next
-                    $field_class = $existing_classes[$flag + $field_index + 1];
+	    // throw an error if class not found or more than one
+	    if(1 < count($matches) || 0 == count($matches)) {
+		throw new Exception('No specific field class was found');
+	    }
 
-                    // create our link using our new field class
-                    $field_types[ $type ] = $field_class;
 
-                    $field_index++;
-                }
+	    // create our link using our new field class
+	    $field_types[ $type ] = array_values($matches)[0];
+
+                
             }
 
             // send it back
